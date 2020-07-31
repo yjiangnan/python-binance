@@ -93,6 +93,12 @@ class BaseClient(ABC):
         self.API_SECRET = api_secret
         self.session = self._init_session()
         self._requests_params = requests_params
+        self._sync()
+
+    def _sync(self):
+        t0 = time.time()
+        svt = self.get_server_time()['serverTime'] / 1000
+        self.server_dt = svt - (time.time() + t0) / 2
 
     def _get_headers(self):
         return {
@@ -164,7 +170,7 @@ class BaseClient(ABC):
 
         if signed:
             # generate signature
-            kwargs['data']['timestamp'] = int(time.time() * 1000)
+            kwargs['data']['timestamp'] = int((time.time() + self.server_dt) * 1000)
             kwargs['data']['signature'] = self._generate_signature(kwargs['data'])
 
         # sort get and post params to match signature order
@@ -211,6 +217,7 @@ class Client(BaseClient):
         response.
         """
         if not str(response.status_code).startswith('2'):
+            if 'Timestamp for' in response.text: self._sync()
             raise BinanceAPIException(response, response.status_code, response.text)
         try:
             return response.json()
@@ -2115,6 +2122,7 @@ class AsyncClient(BaseClient):
         response.
         """
         if not str(response.status).startswith('2'):
+            if 'Timestamp for' in response.text: self._sync()
             raise BinanceAPIException(response, response.status, await response.text())
         try:
             return await response.json()
