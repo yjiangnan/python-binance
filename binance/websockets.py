@@ -106,12 +106,14 @@ class BinanceSocketManager:
 
         """
         self._conns = {}
-        self._user_timer = None
-        self._user_listen_key = None
-        self._user_callback = None
         self._client = client
         self._loop = loop
         self._log = logging.getLogger(__name__)
+        self._user_timeout = user_timeout
+        self._timers = {'user': None, 'margin': None}
+        self._listen_keys = {'user': None, 'margin': None}
+        self._account_callbacks = {'user': None, 'margin': None}
+
 
     async def _start_socket(self, path, coro, prefix='ws/'):
         if path in self._conns:
@@ -438,6 +440,56 @@ class BinanceSocketManager:
         await self._start_socket(path, coro)
         return path
 
+    def start_symbol_book_ticker_socket(self, symbol, callback):
+        """Start a websocket for the best bid or ask's price or quantity for a specified symbol.
+
+        https://github.com/binance-exchange/binance-official-api-docs/blob/master/web-socket-streams.md#individual-symbol-book-ticker-streams
+
+        :param symbol: required
+        :type symbol: str
+        :param callback: callback function to handle messages
+        :type callback: function
+
+        :returns: connection key string if successful, False otherwise
+
+        Message Format
+
+        .. code-block:: python
+
+            {
+                "u":400900217,     // order book updateId
+                "s":"BNBUSDT",     // symbol
+                "b":"25.35190000", // best bid price
+                "B":"31.21000000", // best bid qty
+                "a":"25.36520000", // best ask price
+                "A":"40.66000000"  // best ask qty
+            }
+
+        """
+        return self._start_socket(symbol.lower() + '@bookTicker', callback)
+
+    def start_book_ticker_socket(self, callback):
+        """Start a websocket for the best bid or ask's price or quantity for all symbols.
+
+        https://github.com/binance-exchange/binance-official-api-docs/blob/master/web-socket-streams.md#all-book-tickers-stream
+
+        :param callback: callback function to handle messages
+        :type callback: function
+
+        :returns: connection key string if successful, False otherwise
+
+        Message Format
+
+        .. code-block:: python
+
+            {
+                // Same as <symbol>@bookTicker payload
+            }
+
+        """
+        return self._start_socket('!bookTicker', callback)
+
+
     async def start_multiplex_socket(self, streams, coro):
         """Start a multiplexed socket using a list of socket names.
         User stream sockets can not be included.
@@ -491,10 +543,34 @@ class BinanceSocketManager:
         self._user_listen_key = user_listen_key
         self._user_callback = callback
         conn_key = await self._start_socket(self._user_listen_key, callback)
+        return self._start_account_socket('user', user_listen_key, callback)
+
+    def start_margin_socket(self, callback):
+        """Start a websocket for margin data
+
+        https://github.com/binance-exchange/binance-official-api-docs/blob/master/user-data-stream.md
+
+        :param callback: callback function to handle messages
+        :type callback: function
+
+        :returns: connection key string if successful, False otherwise
+
+        Message Format - see Binance API docs for all types
+        """
+        # Get the user margin listen key
+        margin_listen_key = self._client.margin_stream_get_listen_key()
+        # and start the socket with this specific key
+        return self._start_account_socket('margin', margin_listen_key, callback)
+
+    def _start_account_socket(self, socket_type, listen_key, callback):
+        """Starts one of user or margin socket"""
+        self._check_account_socket_open(listen_key)
+        self._listen_keys[socket_type] = listen_key
+        self._account_callbacks[socket_type] = callback
+        conn_key = self._start_socket(listen_key, callback)
         if conn_key:
             # start timer to keep socket alive
-            self._start_user_timer()
-
+            self._start_socket_timer(socket_type)
         return conn_key
 
     def _start_user_timer(self):
