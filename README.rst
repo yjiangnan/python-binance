@@ -1,6 +1,4 @@
-================================
-Welcome to python-binance v0.7.5
-================================
+Welcome to python-binance v0.7.5-async
 
 Note
 ----
@@ -142,6 +140,67 @@ Quick Start
 
 For more `check out the documentation <https://python-binance.readthedocs.io/en/latest/>`_.
 
+Async Example
+-------------
+
+.. code:: python
+
+    import asyncio
+    import json
+
+    from binance import AsyncClient, DepthCacheManager, BinanceSocketManager
+
+
+    dcm1 = None
+    loop = None
+
+
+    async def main():
+        global dcm1, loop
+
+        # initialise the client
+        client = await AsyncClient.create()
+
+        # run some simple requests
+        print(json.dumps(await client.get_exchange_info(), indent=2))
+
+        print(json.dumps(await client.get_symbol_ticker(symbol="BTCUSDT"), indent=2))
+
+
+        # initialise socket manager
+        bsm = BinanceSocketManager(client, loop)
+
+        # setup async callback handler for socket messages
+        async def handle_evt(msg):
+            pair = msg['s']
+            print(f'{pair} : {msg}')
+
+        # create listener, can use the `ethkey` value to close the socket later
+        trxkey = await bsm.start_trade_socket('TRXBTC', handle_evt)
+
+
+        # setup an async callback for the Depth Cache
+        async def process_depth(depth_cache):
+            print(f"symbol {depth_cache.symbol} updated:{depth_cache.update_time}")
+            print("Top 5 asks:")
+            print(depth_cache.get_asks()[:5])
+            print("Top 5 bids:")
+            print(depth_cache.get_bids()[:5])
+
+        # create the Depth Cache
+        dcm1 = await DepthCacheManager.create(client, loop, 'TRXBTC', process_depth)
+
+        while True:
+            print("doing a sleep")
+            await asyncio.sleep(20, loop=loop)
+
+
+    if __name__ == "__main__":
+
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(main())
+
+
 Donate
 ------
 
@@ -158,6 +217,9 @@ Other Exchanges
 If you use `Binance Chain <https://testnet.binance.org/>`_ check out my `python-binance-chain <https://github.com/sammchardy/python-binance-chain>`_ library.
 
 If you use `Kucoin <https://www.kucoin.com/?rcode=E42cWB>`_ check out my `python-kucoin <https://github.com/sammchardy/python-kucoin>`_ library.
+
+If you use `Allcoin <https://www.allcoin.com/Account/RegisterByPhoneNumber/?InviteCode=MTQ2OTk4MDgwMDEzNDczMQ==>`_ check out my `python-allucoin <https://github.com/sammchardy/python-allcoin>`_ library.
+
 
 If you use `IDEX <https://idex.market>`_ check out my `python-idex <https://github.com/sammchardy/python-idex>`_ library.
 
