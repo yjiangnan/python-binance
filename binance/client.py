@@ -103,7 +103,6 @@ class BaseClient(ABC):
         self.API_SECRET = api_secret
         self.session = self._init_session()
         self._requests_params = requests_params
-        self._sync()
 
     def _sync(self):
         t0 = time.time()
@@ -214,6 +213,7 @@ class Client(BaseClient):
 
         # init DNS and SSL cert
         self.ping()
+        self._sync()
 
     def _init_session(self):
 
@@ -3711,6 +3711,7 @@ class AsyncClient(BaseClient):
         self = cls(api_key, api_secret, requests_params)
 
         await self.ping()
+        await self._sync()
 
         return self
 
@@ -3722,6 +3723,11 @@ class AsyncClient(BaseClient):
             headers=self._get_headers()
         )
         return session
+
+    async def _sync(self):
+        t0 = time.time()
+        svt = await self.get_server_time()['serverTime'] / 1000
+        self.server_dt = svt - (time.time() + t0) / 2
 
     async def _request(self, method, uri, signed, force_params=False, **kwargs):
 
@@ -3736,7 +3742,7 @@ class AsyncClient(BaseClient):
         response.
         """
         if not str(response.status).startswith('2'):
-            if 'Timestamp for' in response.text: self._sync()
+            if 'Timestamp for' in response.text: await self._sync()
             raise BinanceAPIException(response, response.status, await response.text())
         try:
             return await response.json()
