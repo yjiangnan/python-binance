@@ -230,7 +230,6 @@ class Client(BaseClient):
         response = getattr(self.session, method)(uri, **kwargs)
         return self._handle_response(response)
 
-    @staticmethod
     def _handle_response(self, response):
         """Internal helper for handling API responses from the Binance server.
         Raises the appropriate exceptions when necessary; otherwise, returns the
