@@ -231,7 +231,7 @@ class Client(BaseClient):
         return self._handle_response(response)
 
     @staticmethod
-    def _handle_response(response):
+    def _handle_response(self, response):
         """Internal helper for handling API responses from the Binance server.
         Raises the appropriate exceptions when necessary; otherwise, returns the
         response.
