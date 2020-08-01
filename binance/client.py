@@ -3736,7 +3736,7 @@ class AsyncClient(BaseClient):
         session = aiohttp.ClientSession(
             loop=loop,
             headers=self._get_headers(),
-            verify_ssl=False
+            connector=asyncio.TCPConnector(verify_ssl=False)
         )
         return session
 
