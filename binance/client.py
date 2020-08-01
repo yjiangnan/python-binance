@@ -241,9 +241,9 @@ class Client(BaseClient):
             raise BinanceAPIException(response, response.status_code, response.text)
 
         try:
-            return self.response.json()
+            return response.json()
         except ValueError:
-            raise BinanceRequestException('Invalid Response: %s' % self.response.text)
+            raise BinanceRequestException('Invalid Response: %s' % response.text)
 
     def _request_api(self, method, path, signed=False, version=BaseClient.PUBLIC_API_VERSION, **kwargs):
         uri = self._create_api_uri(path, signed, version)
