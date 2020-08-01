@@ -3742,7 +3742,7 @@ class AsyncClient(BaseClient):
 
     async def _sync(self):
         t0 = time.time()
-        svt = await self.get_server_time()['serverTime'] / 1000
+        svt = (await self.get_server_time())['serverTime'] / 1000
         self.server_dt = svt - (time.time() + t0) / 2
     
     async def _request(self, method, uri, signed, force_params=False, **kwargs):
