@@ -98,7 +98,7 @@ class BinanceSocketManager:
 
     _user_timeout = 30 * 60  # 30 minutes
 
-    def __init__(self, client, loop, user_timeout):
+    def __init__(self, client, loop, user_timeout=60):
         """Initialise the BinanceSocketManager
 
         :param client: Binance API client
