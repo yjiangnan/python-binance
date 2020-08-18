@@ -248,6 +248,10 @@ class Client(BaseClient):
         uri = self._create_api_uri(path, signed, version)
         return self._request(method, uri, signed, **kwargs)
 
+    def _request_margin_api(self, method, path, signed=False, **kwargs):
+        uri = self._create_margin_api_uri(path)
+        return self._request(method, uri, signed, **kwargs)
+
     def _request_withdraw_api(self, method, path, signed=False, **kwargs):
         uri = self._create_withdraw_api_uri(path)
         return self._request(method, uri, signed, True, **kwargs)
