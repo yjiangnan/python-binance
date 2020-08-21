@@ -817,13 +817,18 @@ class Client(BaseClient):
         idx = 0
         while True:
             # fetch the klines from start_ts up to max 500 entries or the end_ts if set
-            temp_data = self.get_klines(
-                symbol=symbol,
-                interval=interval,
-                limit=limit,
-                startTime=start_ts,
-                endTime=end_ts
-            )
+            try:
+                temp_data = self.get_klines(
+                    symbol=symbol,
+                    interval=interval,
+                    limit=limit,
+                    startTime=start_ts,
+                    endTime=end_ts
+                )
+            except: 
+                time.sleep(1)
+                print('Error in get_klines in get_historical_klines for', symbol, interval, start_ts)
+                continue
 
             # handle the case where exactly the limit amount of data was returned last loop
             if not len(temp_data):
