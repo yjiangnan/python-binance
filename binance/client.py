@@ -225,10 +225,9 @@ class Client(BaseClient):
 
     def _request(self, method, uri, signed, force_params=False, **kwargs):
 
-        kwargs = self._get_request_kwargs(method, signed, force_params, **kwargs)
-
         tries = 0
         while tries < 4:
+            kwargs = self._get_request_kwargs(method, signed, force_params, **kwargs)
             try:
                 response = getattr(self.session, method)(uri, **kwargs)
                 break
