@@ -103,11 +103,14 @@ class BaseClient(ABC):
         self.API_SECRET = api_secret
         self.session = self._init_session()
         self._requests_params = requests_params
+        self.server_dt = 0
 
     def _sync(self):
         t0 = time.time()
         svt = self.get_server_time()['serverTime'] / 1000
-        self.server_dt = svt - (time.time() + t0) / 2
+        dt = svt - (time.time() + t0) / 2
+        if self.server_dt: self.server_dt += 0.4 * (dt - self.server_dt)
+        else: self.server_dt = dt
 
     def _get_headers(self):
         return {
@@ -212,7 +215,7 @@ class Client(BaseClient):
         super().__init__(api_key, api_secret, requests_params)
 
         # init DNS and SSL cert
-        self.ping()
+        self.weight_used = 0
         self._sync()
 
     def _init_session(self):
@@ -227,6 +230,9 @@ class Client(BaseClient):
 
         tries = 0
         while tries < 4:
+            if self.weight_used > 1170: 
+                t = time.time() + self.server_dt
+                time.sleep(63 + t//60*60 - t)
             kwargs = self._get_request_kwargs(method, signed, force_params, **kwargs)
             try:
                 response = getattr(self.session, method)(uri, **kwargs)
@@ -244,7 +250,8 @@ class Client(BaseClient):
         if not str(response.status_code).startswith('2'):
             if 'Timestamp for' in response.text: self._sync()
             raise BinanceAPIException(response, response.status_code, response.text)
-
+        if 'x-mbx-used-weight-1m' in response.headers:
+            self.weight_used = int(response.headers['x-mbx-used-weight-1m'])
         try:
             return response.json()
         except ValueError:
