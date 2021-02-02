@@ -243,7 +243,7 @@ class Client(BaseClient):
                 response = getattr(self.session, method)(uri, **reqkwargs)
                 if 'x-mbx-used-weight-1m' in response.headers:
                     w1 = int(response.headers['x-mbx-used-weight-1m'])
-                    if w1 - w0 > 1: print('weight used:', w1, w1 - w0, uri)
+                    if w1 - w0 > 1 and w1 > 800: print('weight used:', w1, w1 - w0, uri)
                 break
             except:
                 tries += 1
