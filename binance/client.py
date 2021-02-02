@@ -254,6 +254,7 @@ class Client(BaseClient):
             raise BinanceAPIException(response, response.status_code, response.text)
         if 'x-mbx-used-weight-1m' in response.headers:
             self.weight_used = int(response.headers['x-mbx-used-weight-1m'])
+        else: print('x-mbx-used-weight-1m is not in headers!')
         try:
             return response.json()
         except ValueError:
