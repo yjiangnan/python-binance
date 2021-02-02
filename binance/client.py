@@ -237,7 +237,10 @@ class Client(BaseClient):
                 self.weight_used = 0
             kwargs = self._get_request_kwargs(method, signed, force_params, **kwargs)
             try:
+                w0 = self.weight_used
                 response = getattr(self.session, method)(uri, **kwargs)
+                w1 = int(response.headers['x-mbx-used-weight-1m'])
+                print('weight used:', w1, w1 - w0, uri)
                 break
             except:
                 tries += 1
