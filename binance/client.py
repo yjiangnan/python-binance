@@ -208,6 +208,7 @@ class BaseClient(ABC):
 
         return kwargs
 
+weight_used = 0
 class Client(BaseClient):
 
     def __init__(self, api_key, api_secret, requests_params=None):
@@ -215,7 +216,6 @@ class Client(BaseClient):
         super().__init__(api_key, api_secret, requests_params)
 
         # init DNS and SSL cert
-        self.weight_used = 0
         self._sync()
 
     def _init_session(self):
@@ -227,17 +227,17 @@ class Client(BaseClient):
         return session
 
     def _request(self, method, uri, signed, force_params=False, **kwargs):
-
+        global weight_used
         tries = 0
         while tries < 4:
-            if self.weight_used > 1170: 
+            if weight_used > 1170: 
                 t = time.time() + self.server_dt; dt = 63 + t//60*60 - t
                 time.sleep(dt)
                 print('Too much weight used, waiting for', int(dt*10+0.5)/10., 'seconds')
-                self.weight_used = 0
+                weight_used = 0
             kwargs = self._get_request_kwargs(method, signed, force_params, **kwargs)
             try:
-                w0 = self.weight_used
+                w0 = weight_used
                 response = getattr(self.session, method)(uri, **kwargs)
                 w1 = int(response.headers['x-mbx-used-weight-1m'])
                 print('weight used:', w1, w1 - w0, uri)
@@ -248,6 +248,7 @@ class Client(BaseClient):
         return self._handle_response(response)
 
     def _handle_response(self, response):
+        global weight_used
         """Internal helper for handling API responses from the Binance server.
         Raises the appropriate exceptions when necessary; otherwise, returns the
         response.
@@ -256,7 +257,7 @@ class Client(BaseClient):
             if 'Timestamp for' in response.text: self._sync()
             raise BinanceAPIException(response, response.status_code, response.text)
         if 'x-mbx-used-weight-1m' in response.headers:
-            self.weight_used = int(response.headers['x-mbx-used-weight-1m'])
+            weight_used = int(response.headers['x-mbx-used-weight-1m'])
         else: print('x-mbx-used-weight-1m is not in headers!')
         try:
             return response.json()
