@@ -231,8 +231,10 @@ class Client(BaseClient):
         tries = 0
         while tries < 4:
             if self.weight_used > 1170: 
-                t = time.time() + self.server_dt
-                time.sleep(63 + t//60*60 - t)
+                t = time.time() + self.server_dt; dt = 63 + t//60*60 - t
+                time.sleep(dt)
+                print('Too much weight used, waiting for', int(dt*10+0.5)/10., 'seconds')
+                self.weight_used = 0
             kwargs = self._get_request_kwargs(method, signed, force_params, **kwargs)
             try:
                 response = getattr(self.session, method)(uri, **kwargs)
