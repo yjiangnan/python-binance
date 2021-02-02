@@ -8,6 +8,7 @@ import requests
 import time
 from abc import ABC, abstractmethod
 from operator import itemgetter
+from copy import deepcopy
 
 from .helpers import interval_to_milliseconds, convert_ts_str
 from .exceptions import BinanceAPIException, BinanceRequestException, BinanceWithdrawException
@@ -171,6 +172,7 @@ class BaseClient(ABC):
     def _get_request_kwargs(self, method, signed, force_params=False, **kwargs):
 
         # set default requests timeout
+        kwargs = deepcopy(kwargs)
         kwargs['timeout'] = 10
 
         # add our global requests params
@@ -235,10 +237,10 @@ class Client(BaseClient):
                 time.sleep(dt)
                 print('Too much weight used, waiting for', int(dt*10+0.5)/10., 'seconds')
                 weight_used = 0
-            kwargs = self._get_request_kwargs(method, signed, force_params, **kwargs)
+            reqkwargs = self._get_request_kwargs(method, signed, force_params, **kwargs)
             try:
                 w0 = weight_used
-                response = getattr(self.session, method)(uri, **kwargs)
+                response = getattr(self.session, method)(uri, **reqkwargs)
                 w1 = int(response.headers['x-mbx-used-weight-1m'])
                 print('weight used:', w1, w1 - w0, uri)
                 break
