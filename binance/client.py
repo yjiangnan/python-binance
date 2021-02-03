@@ -231,7 +231,7 @@ class Client(BaseClient):
     def _request(self, method, uri, signed, force_params=False, **kwargs):
         global weight_used
         tries = 0
-        while tries < 4:
+        while tries < 3:
             if weight_used > 1170: 
                 t = time.time() + self.server_dt; dt = 63 + t//60*60 - t
                 time.sleep(dt)
@@ -242,9 +242,10 @@ class Client(BaseClient):
                 w0 = weight_used
                 response = getattr(self.session, method)(uri, **reqkwargs)
                 if 'x-mbx-used-weight-1m' in response.headers:
-                    w1 = int(response.headers['x-mbx-used-weight-1m'])
-                    if w1 - w0 > 1 and w1 > 800: print('weight used:', w1, w1 - w0, uri)
-                else: print('x-mbx-used-weight-1m is not in headers for', uri, response.headers.keys())
+                    weight_used = w1 = int(response.headers['x-mbx-used-weight-1m'])
+                    if w1 - w0 > 1 and w1 > 900: print('weight used:', w1, w1 - w0, uri)
+                elif 'sapi/v1/margin/account' not in uri: 
+                    print('x-mbx-used-weight-1m is not in headers for', uri, 'weight_used:', weight_used, response.headers.keys())
                 break
             except:
                 tries += 1
@@ -252,7 +253,6 @@ class Client(BaseClient):
         return self._handle_response(response)
 
     def _handle_response(self, response):
-        global weight_used
         """Internal helper for handling API responses from the Binance server.
         Raises the appropriate exceptions when necessary; otherwise, returns the
         response.
@@ -260,8 +260,6 @@ class Client(BaseClient):
         if not str(response.status_code).startswith('2'):
             if 'Timestamp for' in response.text: self._sync()
             raise BinanceAPIException(response, response.status_code, response.text)
-        if 'x-mbx-used-weight-1m' in response.headers:
-            weight_used = int(response.headers['x-mbx-used-weight-1m'])
         try:
             return response.json()
         except ValueError:
