@@ -244,6 +244,7 @@ class Client(BaseClient):
                 if 'x-mbx-used-weight-1m' in response.headers:
                     w1 = int(response.headers['x-mbx-used-weight-1m'])
                     if w1 - w0 > 1 and w1 > 800: print('weight used:', w1, w1 - w0, uri)
+                else: print('x-mbx-used-weight-1m is not in headers for', uri, response.headers.keys())
                 break
             except:
                 tries += 1
@@ -261,7 +262,6 @@ class Client(BaseClient):
             raise BinanceAPIException(response, response.status_code, response.text)
         if 'x-mbx-used-weight-1m' in response.headers:
             weight_used = int(response.headers['x-mbx-used-weight-1m'])
-        else: print('x-mbx-used-weight-1m is not in headers!')
         try:
             return response.json()
         except ValueError:
