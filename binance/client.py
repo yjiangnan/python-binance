@@ -244,7 +244,7 @@ class Client(BaseClient):
                 if 'x-mbx-used-weight-1m' in response.headers:
                     weight_used = w1 = int(response.headers['x-mbx-used-weight-1m'])
                     if w1 - w0 > 1 and w1 > 900: print('weight used:', w1, w1 - w0, uri)
-                elif 'sapi/v1/margin/account' not in uri: 
+                elif weight_used > 900 and 'sapi/v1/margin' not in uri: 
                     print('x-mbx-used-weight-1m is not in headers for', uri, 'weight_used:', weight_used, response.headers.keys())
                 break
             except:
