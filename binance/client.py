@@ -5,7 +5,7 @@ import asyncio
 import hashlib
 import hmac
 import requests
-import time
+import time, logging
 from abc import ABC, abstractmethod
 from operator import itemgetter
 from copy import deepcopy
@@ -250,19 +250,14 @@ class Client(BaseClient):
             except:
                 tries += 1
                 time.sleep(1)
-        return self._handle_response(response)
-
-    def _handle_response(self, response):
-        """Internal helper for handling API responses from the Binance server.
-        Raises the appropriate exceptions when necessary; otherwise, returns the
-        response.
-        """
+                logging.exception(f'Error in requesting {method} {uri} {reqkwargs}', exc_info=False)
         if not str(response.status_code).startswith('2'):
             if 'Timestamp for' in response.text: self._sync()
             raise BinanceAPIException(response, response.status_code, response.text)
         try:
             return response.json()
         except ValueError:
+            logging.exception(f'Error in requesting {method} {uri} {reqkwargs}', exc_info=False)
             raise BinanceRequestException('Invalid Response: %s' % response.text)
 
     def _request_api(self, method, path, signed=False, version=BaseClient.PUBLIC_API_VERSION, **kwargs):
