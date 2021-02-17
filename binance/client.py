@@ -250,14 +250,15 @@ class Client(BaseClient):
             except:
                 tries += 1
                 time.sleep(1)
-                logging.exception(f'Error in requesting {method} {uri} {reqkwargs}', exc_info=False)
+                logging.exception(f'Request error in requesting {method} {uri} {reqkwargs}', exc_info=False)
         if not str(response.status_code).startswith('2'):
             if 'Timestamp for' in response.text: self._sync()
+            logging.exception(f'Status error in requesting {method} {uri} {reqkwargs}', exc_info=False)
             raise BinanceAPIException(response, response.status_code, response.text)
         try:
             return response.json()
         except ValueError:
-            logging.exception(f'Error in requesting {method} {uri} {reqkwargs}', exc_info=False)
+            logging.exception(f'Value error in requesting {method} {uri} {reqkwargs}', exc_info=False)
             raise BinanceRequestException('Invalid Response: %s' % response.text)
 
     def _request_api(self, method, path, signed=False, version=BaseClient.PUBLIC_API_VERSION, **kwargs):
