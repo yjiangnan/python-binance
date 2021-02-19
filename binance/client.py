@@ -247,18 +247,18 @@ class Client(BaseClient):
                 elif weight_used > 900 and 'sapi/v1/margin' not in uri: 
                     print('x-mbx-used-weight-1m is not in headers for', uri, 'weight_used:', weight_used, response.headers.keys())
                 break
-            except:
+            except Exception as e:
                 tries += 1
-                time.sleep(1)
-                logging.exception(f'Request error in requesting {method} {uri} {reqkwargs}', exc_info=False)
+                logging.exception(f'Request error in requesting {method} {uri} {reqkwargs}: {str(e)}', exc_info=False)
+                time.sleep(0.5)
         if not str(response.status_code).startswith('2'):
             if 'Timestamp for' in response.text: self._sync()
-            logging.exception(f'Status error in requesting {method} {uri} {reqkwargs}', exc_info=False)
+            logging.exception(f'Status error in requesting {method} {uri} {reqkwargs}: {response.text}', exc_info=False)
             raise BinanceAPIException(response, response.status_code, response.text)
         try:
             return response.json()
         except ValueError:
-            logging.exception(f'Value error in requesting {method} {uri} {reqkwargs}', exc_info=False)
+            logging.exception(f'Value error in requesting {method} {uri} {reqkwargs}: {response.text}', exc_info=False)
             raise BinanceRequestException('Invalid Response: %s' % response.text)
 
     def _request_api(self, method, path, signed=False, version=BaseClient.PUBLIC_API_VERSION, **kwargs):
