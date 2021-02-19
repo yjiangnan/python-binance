@@ -253,7 +253,7 @@ class Client(BaseClient):
                 time.sleep(0.5)
         if not str(response.status_code).startswith('2'):
             if 'Timestamp for' in response.text: self._sync()
-            logging.exception(f'Status error in requesting {method} {uri.split('.com')[1]} {kwargs}: {response.text}', exc_info=False)
+#             logging.exception(f'Status error in requesting {method} {uri.split('.com')[1]} {kwargs}: {response.text}', exc_info=False)
             raise BinanceAPIException(response, response.status_code, response.text)
         try:
             return response.json()
