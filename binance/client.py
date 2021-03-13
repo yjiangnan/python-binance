@@ -81,6 +81,7 @@ class BaseClient(ABC):
     AGG_TIME = 'T'
     AGG_BUYER_MAKES = 'm'
     AGG_BEST_MATCH = 'M'
+    server_dt = 0
 
     def __init__(self, api_key=None, api_secret=None, requests_params=None, tld='com'):
         """Binance API Client constructor
@@ -104,14 +105,14 @@ class BaseClient(ABC):
         self.API_SECRET = api_secret
         self.session = self._init_session()
         self._requests_params = requests_params
-        self.server_dt = 0
 
     def _sync(self):
+        self.get_server_time() # establish connection
         t0 = time.time()
         svt = self.get_server_time()['serverTime'] / 1000
         dt = svt - (time.time() + t0) / 2
-        if self.server_dt: self.server_dt += 0.4 * (dt - self.server_dt)
-        else: self.server_dt = dt
+        if BaseClient.server_dt: BaseClient.server_dt += 0.5 * (dt - BaseClient.server_dt)
+        else: BaseClient.server_dt = dt
 
     def _get_headers(self):
         return {
