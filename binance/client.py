@@ -106,7 +106,7 @@ class BaseClient(ABC):
         self.session = self._init_session()
         self._requests_params = requests_params
 
-    def _sync(self):
+    def _sync_time(self):
         self.get_server_time() # establish connection
         t0 = time.time()
         svt = self.get_server_time()['serverTime'] / 1000
@@ -219,7 +219,7 @@ class Client(BaseClient):
         super().__init__(api_key, api_secret, requests_params)
 
         # init DNS and SSL cert
-        self._sync()
+        if self.server_dt==0: self._sync_time()
 
     def _init_session(self):
 
@@ -253,7 +253,7 @@ class Client(BaseClient):
                 logging.exception(f'Request error in requesting {method} {uri.split(".com")[1]} {kwargs}: {str(e)}', exc_info=False)
                 time.sleep(0.5)
         if not str(response.status_code).startswith('2'):
-            if 'Timestamp for' in response.text: self._sync()
+            if 'Timestamp for' in response.text: self._sync_time()
 #             logging.exception(f'Status error in requesting {method} {uri.split(".com")[1]} {kwargs}: {response.text}', exc_info=False)
             raise BinanceAPIException(response, response.status_code, response.text)
         try:
@@ -3753,7 +3753,7 @@ class AsyncClient(BaseClient):
         self = cls(api_key, api_secret, requests_params)
 
         await self.ping()
-        await self._sync()
+        await self._sync_time()
 
         return self
 
@@ -3767,7 +3767,7 @@ class AsyncClient(BaseClient):
         )
         return session
 
-    async def _sync(self):
+    async def _sync_time(self):
         t0 = time.time()
         svt = (await self.get_server_time())['serverTime'] / 1000
         self.server_dt = svt - (time.time() + t0) / 2
@@ -3785,7 +3785,7 @@ class AsyncClient(BaseClient):
         response.
         """
         if not str(response.status).startswith('2'):
-            if 'Timestamp for' in response.text: await self._sync()
+            if 'Timestamp for' in response.text: await self._sync_time()
             raise BinanceAPIException(response, response.status, await response.text())
         try:
             return await response.json()
