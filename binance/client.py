@@ -4,7 +4,7 @@ import aiohttp
 import asyncio
 import hashlib
 import hmac
-import requests
+import requests, socket
 import time, logging
 from abc import ABC, abstractmethod
 from operator import itemgetter
@@ -213,7 +213,7 @@ class BaseClient(ABC):
 
 weight_used = 0
 class Client(BaseClient):
-
+    proxies = {}
     def __init__(self, api_key, api_secret, requests_params=None):
 
         super().__init__(api_key, api_secret, requests_params)
@@ -224,9 +224,14 @@ class Client(BaseClient):
     def _init_session(self):
 
         headers = self._get_headers()
-
         session = requests.session()
         session.headers.update(headers)
+        if not Client.proxies:
+            soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            status = soc.connect_ex(('0.0.0.0', 1080))
+            if status == 0:
+                Client.proxies['https'] = 'socks5://localhost:1080'
+            else: print('socks5 proxy on port 1080 is no open! Status:', status)
         return session
 
     def _request(self, method, uri, signed, force_params=False, **kwargs):
@@ -240,8 +245,9 @@ class Client(BaseClient):
                 weight_used = 0
             reqkwargs = self._get_request_kwargs(method, signed, force_params, **kwargs)
             try:
-                w0 = weight_used
-                response = getattr(self.session, method)(uri, **reqkwargs)
+                w0 = weight_used; proxies = {}
+                if 'klines' not in uri or 'depth' not in uri: proxies = Client.proxies # Do NOT route public data through proxy
+                response = getattr(self.session, method)(uri, proxies=proxies, **reqkwargs)
                 if 'x-mbx-used-weight-1m' in response.headers:
                     weight_used = w1 = int(response.headers['x-mbx-used-weight-1m'])
                     if w1 - w0 > 1 and w1 > 900: print('weight used:', w1, w1 - w0, uri)
