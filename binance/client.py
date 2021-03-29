@@ -254,13 +254,13 @@ class Client(BaseClient):
                 response = getattr(self.session, method)(uri, proxies=proxies, **reqkwargs)
                 if 'x-mbx-used-weight-1m' in response.headers:
                     weight_used = w1 = int(response.headers['x-mbx-used-weight-1m'])
-                    if w1 - w0 > 1 and w1 > 900: print('weight used:', w1, w1 - w0, uri)
+                    if w1 - w0 > 1 and w1 > 900: print('weight used:', w1, w1 - w0, uri, 'self.proxy:', self.proxy, 'proxies:', proxies)
                 elif weight_used > 900 and 'sapi/v1/margin' not in uri: 
-                    print('x-mbx-used-weight-1m is not in headers for', uri, 'weight_used:', weight_used, response.headers.keys())
+                    print('x-mbx-used-weight-1m is not in headers for', uri, 'weight_used:', weight_used, response.headers.keys(), 'self.proxy:', self.proxy, 'proxies:', proxies)
                 break
             except Exception as e:
                 tries += 1
-                logging.exception(f'Request error in requesting {method} {uri.split(".com")[1]} {kwargs}: {str(e)} proxy:{self.proxy}', exc_info=False)
+                logging.exception(f'Request error in requesting {method} {uri.split(".com")[1]} {kwargs}: {str(e)} self.proxy:{self.proxy} proxies:{proxies}', exc_info=False)
                 time.sleep(0.5)
         if not str(response.status_code).startswith('2'):
             if 'Timestamp for' in response.text: self._sync_time()
