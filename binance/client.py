@@ -226,7 +226,7 @@ class Client(BaseClient):
         if self.server_dt==0: self._sync_time()
 
     def update_proxy(self):
-        if Client.proxies and self.API_KEY and self.API_KEY[:6] not in ['PHAjHC']:
+        if Client.proxies and self.API_KEY and self.API_KEY[:6] not in ['PHAjHC', '21U0K8']:
             self.proxy['https'] = f'socks5://{Client.proxies[Client.proxyid % len(Client.proxies)]}:1080'
             print('proxy updated:', self.API_KEY[:6], self.proxy['https'])
             Client.proxyid += 1
