@@ -225,9 +225,10 @@ class Client(BaseClient):
         # init DNS and SSL cert
         if self.server_dt==0: self._sync_time()
 
-    def update_proxy():
+    def update_proxy(self):
         if Client.proxies:
             self.proxy['https'] = f'socks5://{Client.proxies[Client.proxyid % len(Client.proxies)]}:1080'
+            print('proxy updated:', self.API_KEY[:6], self.proxy['https'])
             Client.proxyid += 1
         
     def _init_session(self):
