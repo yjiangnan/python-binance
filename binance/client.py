@@ -4,7 +4,7 @@ import aiohttp
 import asyncio
 import hashlib
 import hmac
-import requests, socket
+import requests
 import time, logging
 from abc import ABC, abstractmethod
 from operator import itemgetter
@@ -213,25 +213,28 @@ class BaseClient(ABC):
 
 weight_used = 0
 class Client(BaseClient):
-    proxies = {}
-    def __init__(self, api_key, api_secret, requests_params=None):
+    proxies = []
+    proxyid = 0
+    def __init__(self, api_key, api_secret, proxies=[], requests_params=None):
 
         super().__init__(api_key, api_secret, requests_params)
+        if not Client.proxies: Client.proxies = proxies
+        self.proxy = {}
+        self.update_proxy()
 
         # init DNS and SSL cert
         if self.server_dt==0: self._sync_time()
 
+    def update_proxy():
+        if Client.proxies:
+            self.proxy['https'] = f'socks5://{Client.proxies[Client.proxyid % len(Client.proxies)]}:1080'
+            Client.proxyid += 1
+        
     def _init_session(self):
 
         headers = self._get_headers()
         session = requests.session()
         session.headers.update(headers)
-        if not Client.proxies:
-            soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            status = soc.connect_ex(('0.0.0.0', 1080))
-            if status == 0:
-                Client.proxies['https'] = 'socks5://localhost:1080'
-            else: print('socks5 proxy on port 1080 is no open! Status:', status)
         return session
 
     def _request(self, method, uri, signed, force_params=False, **kwargs):
@@ -240,13 +243,14 @@ class Client(BaseClient):
         while tries < 3:
             if weight_used > 1170: 
                 t = time.time() + self.server_dt; dt = 63 + t//60*60 - t
+                print('Too much weight used, waiting for', int(dt*10+0.5)/10., 'seconds', flush=True)
                 time.sleep(dt)
-                print('Too much weight used, waiting for', int(dt*10+0.5)/10., 'seconds')
                 weight_used = 0
             reqkwargs = self._get_request_kwargs(method, signed, force_params, **kwargs)
             try:
                 w0 = weight_used; proxies = {}
-                if 'klines' not in uri or 'depth' not in uri: proxies = Client.proxies # Do NOT route public data through proxy
+                if 'klines' not in uri or 'depth' not in uri:  # Do NOT route public data through proxy
+                    proxies = self.proxy
                 response = getattr(self.session, method)(uri, proxies=proxies, **reqkwargs)
                 if 'x-mbx-used-weight-1m' in response.headers:
                     weight_used = w1 = int(response.headers['x-mbx-used-weight-1m'])
@@ -256,7 +260,7 @@ class Client(BaseClient):
                 break
             except Exception as e:
                 tries += 1
-                logging.exception(f'Request error in requesting {method} {uri.split(".com")[1]} {kwargs}: {str(e)}', exc_info=False)
+                logging.exception(f'Request error in requesting {method} {uri.split(".com")[1]} {kwargs}: {str(e)} proxy:{self.proxy}', exc_info=False)
                 time.sleep(0.5)
         if not str(response.status_code).startswith('2'):
             if 'Timestamp for' in response.text: self._sync_time()
