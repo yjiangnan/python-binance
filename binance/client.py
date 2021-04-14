@@ -272,7 +272,10 @@ class Client(BaseClient):
         except ValueError:
             logging.exception(f'Value error in requesting {method} {uri.split(".com")[1]} {kwargs}: {response.text}', exc_info=False)
             raise BinanceRequestException('Invalid Response: %s' % response.text)
-
+    
+    def request(self, method, path, signed=True, force_params=False, **kwargs):
+        return self._request(method, uri="https://api.binance.com"+path, signed=signed, force_params=force_params, **kwargs)
+                              
     def _request_api(self, method, path, signed=False, version=BaseClient.PUBLIC_API_VERSION, **kwargs):
         uri = self._create_api_uri(path, signed, version)
         return self._request(method, uri, signed, **kwargs)
