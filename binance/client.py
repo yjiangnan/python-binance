@@ -242,7 +242,7 @@ class Client(BaseClient):
         global weight_used
         tries = 0
         while tries < 3:
-            if weight_used > 1170: 
+            if weight_used > 1100: 
                 t = time.time() + self.server_dt; dt = 63 + t//60*60 - t
                 print('Too much weight used, waiting for', int(dt*10+0.5)/10., 'seconds', flush=True)
                 time.sleep(dt)
@@ -266,6 +266,7 @@ class Client(BaseClient):
         if not str(response.status_code).startswith('2'):
             if 'Timestamp for' in response.text: self._sync_time()
 #             logging.exception(f'Status error in requesting {method} {uri.split(".com")[1]} {kwargs}: {response.text}', exc_info=False)
+            if 'too much traffic' in response.text or 'much request weight used' in response.text: time.sleep(300)
             raise BinanceAPIException(response, response.status_code, response.text)
         try:
             return response.json()
