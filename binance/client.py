@@ -251,7 +251,7 @@ class Client(BaseClient):
             reqkwargs = self._get_request_kwargs(method, signed, force_params, **kwargs)
             try:
                 w0 = weight_used; proxies = Client.default_proxy
-                if 'klines' not in uri or 'depth' not in uri:  # Do NOT route public data through proxy
+                if ('klines' not in uri or 'depth' not in uri) and self.proxy:  # Do NOT route public data through proxy
                     proxies = self.proxy
                 response = getattr(self.session, method)(uri, proxies=proxies, **reqkwargs)
                 if 'x-mbx-used-weight-1m' in response.headers:
