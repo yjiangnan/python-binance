@@ -215,6 +215,7 @@ weight_used = 0
 class Client(BaseClient):
     proxies = []
     proxyid = 0
+    default_proxy = {}
     def __init__(self, api_key, api_secret, proxies=[], requests_params=None):
 
         super().__init__(api_key, api_secret, requests_params)
@@ -249,7 +250,7 @@ class Client(BaseClient):
                 weight_used = 0
             reqkwargs = self._get_request_kwargs(method, signed, force_params, **kwargs)
             try:
-                w0 = weight_used; proxies = {}
+                w0 = weight_used; proxies = Client.default_proxy
                 if 'klines' not in uri or 'depth' not in uri:  # Do NOT route public data through proxy
                     proxies = self.proxy
                 response = getattr(self.session, method)(uri, proxies=proxies, **reqkwargs)
