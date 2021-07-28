@@ -253,7 +253,7 @@ class Client(BaseClient):
                 w0 = weight_used; proxies = Client.default_proxy
                 if ('klines' not in uri or 'depth' not in uri) and self.proxy:  # Do NOT route public data through proxy
                     proxies = self.proxy
-                response = getattr(self.session, method)(uri, proxies=proxies, **reqkwargs)
+                response = getattr(self.session, method)(uri, proxies=proxies, verify=False, **reqkwargs)
                 if 'x-mbx-used-weight-1m' in response.headers:
                     weight_used = w1 = int(response.headers['x-mbx-used-weight-1m'])
                     if w1 - w0 > 1 and w1 > 1000: print('weight used:', w1, w1 - w0, uri, 'self.proxy:', self.proxy, 'proxies:', proxies)
