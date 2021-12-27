@@ -2126,7 +2126,7 @@ class Client(BaseClient):
             raise BinanceWithdrawException(res['msg'])
         return res
 
-    def get_asset_details(self, **params):
+    def get_all_margin_asset_details(self, **params):
         """Fetch details on assets.
 
         https://github.com/binance-exchange/binance-official-api-docs/blob/master/wapi-api.md#asset-detail-user_data
@@ -2160,7 +2160,7 @@ class Client(BaseClient):
         :raises: BinanceWithdrawException
 
         """
-        res = self._request_withdraw_api('get', 'assetDetail.html', True, data=params)
+        res = self._request_margin_api('get', 'margin/allAssets', data=params)
         if not res['success']:
             raise BinanceWithdrawException(res['msg'])
         return res
