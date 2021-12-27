@@ -2161,8 +2161,6 @@ class Client(BaseClient):
 
         """
         res = self._request_margin_api('get', 'margin/allAssets', data=params)
-        if not res['success']:
-            raise BinanceWithdrawException(res['msg'])
         return res
 
     # Withdraw Endpoints
