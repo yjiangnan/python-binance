@@ -530,7 +530,7 @@ class Client(BaseClient):
         """
         return self._get('ticker/allBookTickers')
 
-    def get_order_book(self, **params):
+    def get_order_book(self, data, proxy_idx=-1):
         """Get the Order Book for the market
 
         https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md#order-book
@@ -565,9 +565,9 @@ class Client(BaseClient):
         :raises: BinanceRequestException, BinanceAPIException
 
         """
-        return self._get('depth', data=params)
+        return self._get('depth', data=data, proxy_idx=proxy_idx)
 
-    def get_recent_trades(self, **params):
+    def get_recent_trades(self, data, proxy_idx=-1):
         """Get recent trades (up to last 500).
 
         https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md#recent-trades-list
@@ -595,7 +595,7 @@ class Client(BaseClient):
         :raises: BinanceRequestException, BinanceAPIException
 
         """
-        return self._get('trades', data=params)
+        return self._get('trades', data=data, proxy_idx=proxy_idx)
 
     def get_historical_trades(self, **params):
         """Get older trades.
@@ -751,7 +751,7 @@ class Client(BaseClient):
                 yield t
             last_id = trades[-1][self.AGG_ID]
 
-    def get_klines(self, **params):
+    def get_klines(self, params, proxy_idx=-1):
         """Kline/candlestick bars for a symbol. Klines are uniquely identified by their open time.
 
         https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md#klinecandlestick-data
@@ -791,9 +791,9 @@ class Client(BaseClient):
         :raises: BinanceRequestException, BinanceAPIException
 
         """
-        return self._get('klines', data=params)
+        return self._get('klines', data=params, proxy_idx=proxy_idx)
 
-    def _get_earliest_valid_timestamp(self, symbol, interval):
+    def _get_earliest_valid_timestamp(self, symbol, interval, proxy_idx=-1):
         """Get earliest valid open timestamp from Binance
 
         :param symbol: Name of symbol pair e.g BNBBTC
@@ -805,15 +805,16 @@ class Client(BaseClient):
 
         """
         kline = self.get_klines(
-            symbol=symbol,
-            interval=interval,
-            limit=1,
-            startTime=0,
-            endTime=int(time.time() * 1000)
+            {"symbol": symbol,
+             "interval": interval,
+             "limit": 1,
+             "startTime": 0,
+             "endTime": int(time.time() * 1000)
+            }, proxy_idx=proxy_idx
         )
         return kline[0][0]
 
-    def get_historical_klines(self, symbol, interval, start_str, end_str=None, limit=500):
+    def get_historical_klines(self, symbol, interval, start_str, end_str=None, limit=500, proxy_idx=-1):
         """Get Historical Klines from Binance
 
         See dateparser docs for valid start and end string formats http://dateparser.readthedocs.io/en/latest/
@@ -854,11 +855,12 @@ class Client(BaseClient):
             # fetch the klines from start_ts up to max 500 entries or the end_ts if set
             try:
                 temp_data = self.get_klines(
-                    symbol=symbol,
-                    interval=interval,
-                    limit=limit,
-                    startTime=start_ts,
-                    endTime=end_ts
+                    {"symbol": symbol,
+                    "interval": interval,
+                    "limit": limit,
+                    "startTime": start_ts,
+                    "endTime": end_ts
+                    }, proxy_idx=proxy_idx
                 )
             except: 
                 time.sleep(1)
