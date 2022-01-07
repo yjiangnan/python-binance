@@ -254,7 +254,7 @@ class Client(BaseClient):
                 w0 = weight_used; proxies = Client.default_proxy
                 if self.proxy: proxies = self.proxy
                 if 0 <= proxy_idx < len(Client.proxies): proxies = Client.proxies[proxy_idx]
-                response = getattr(self.session, method)(uri, proxies=proxies, **reqkwargs)
+                response = getattr(self.session, method)(uri, proxies=dict(proxies), **reqkwargs) # Make a copy of proxies
                 if 'x-mbx-used-weight-1m' in response.headers:
                     weight_used = w1 = int(response.headers['x-mbx-used-weight-1m'])
                     if w1 - w0 > 1 and w1 > 1000: print('weight used:', w1, w1 - w0, uri, 'self.proxy:', self.proxy, 'proxies:', proxies)
@@ -814,7 +814,7 @@ class Client(BaseClient):
         )
         return kline[0][0]
 
-    def get_historical_klines(self, params, proxy_idx=-1):
+    def get_historical_klines(self, symbol, interval, start_str, end_str=None, limit=500, proxy_idx=-1):
         """Get Historical Klines from Binance
 
         See dateparser docs for valid start and end string formats http://dateparser.readthedocs.io/en/latest/
@@ -855,7 +855,12 @@ class Client(BaseClient):
             # fetch the klines from start_ts up to max 500 entries or the end_ts if set
             try:
                 temp_data = self.get_klines(
-                    params, proxy_idx=proxy_idx
+                    {"symbol": symbol,
+                    "interval": interval,
+                    "limit": limit,
+                    "startTime": start_ts,
+                    "endTime": end_ts
+                    }, proxy_idx=proxy_idx
                 )
             except: 
                 time.sleep(1)
