@@ -216,6 +216,7 @@ class Client(BaseClient):
     proxies = []
     proxyid = 0
     default_proxy = {}
+    
     def __init__(self, api_key, api_secret, proxies=[], requests_params=None):
 
         super().__init__(api_key, api_secret, requests_params)
@@ -227,9 +228,9 @@ class Client(BaseClient):
         if self.server_dt==0: self._sync_time()
 
     def update_proxy(self):
-        if Client.proxies and self.API_KEY and self.API_KEY[:6] not in ['PHAjHC', '21U0K8']:
-            self.proxy['https'] = f'socks5://{Client.proxies[Client.proxyid % len(Client.proxies)]}:1080'
-            print('proxy updated:', self.API_KEY[:6], self.proxy['https'])
+        if Client.proxies and self.API_KEY:
+            self.proxy = dict(Client.proxies[Client.proxyid % len(Client.proxies)])
+            print('proxy updated:', self.API_KEY[:6], self.proxy)
             Client.proxyid += 1
         
     def _init_session(self):
@@ -239,7 +240,7 @@ class Client(BaseClient):
         session.headers.update(headers)
         return session
 
-    def _request(self, method, uri, signed, force_params=False, **kwargs):
+    def _request(self, method, uri, signed, force_params=False, proxy_idx=-1, **kwargs):
         global weight_used
         tries = 0
         while tries < 3:
@@ -251,8 +252,8 @@ class Client(BaseClient):
             reqkwargs = self._get_request_kwargs(method, signed, force_params, **kwargs)
             try:
                 w0 = weight_used; proxies = Client.default_proxy
-                if ('klines' not in uri or 'depth' not in uri) and self.proxy:  # Do NOT route public data through proxy
-                    proxies = self.proxy
+                if self.proxy: proxies = self.proxy
+                if 0 <= proxy_idx < len(Client.proxies): proxies = Client.proxies[proxy_idx]
                 response = getattr(self.session, method)(uri, proxies=proxies, **reqkwargs)
                 if 'x-mbx-used-weight-1m' in response.headers:
                     weight_used = w1 = int(response.headers['x-mbx-used-weight-1m'])
