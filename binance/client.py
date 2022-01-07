@@ -470,7 +470,7 @@ class Client(BaseClient):
         :raises: BinanceRequestException, BinanceAPIException
 
         """
-        return self._get('time')
+        return self._get('time', proxy_idx=0)
 
     # Market Data Endpoints
 
