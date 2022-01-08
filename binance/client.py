@@ -228,7 +228,7 @@ class Client(BaseClient):
         if self.server_dt==0: self._sync_time()
 
     def update_proxy(self):
-        if Client.proxies and self.API_KEY:
+        if Client.proxies and self.API_KEY and self.API_KEY[:6] not in ['PHAjHC']:
             self.proxy = dict(Client.proxies[Client.proxyid % len(Client.proxies)])
             print('proxy updated:', self.API_KEY[:6], self.proxy)
             Client.proxyid += 1
