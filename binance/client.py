@@ -257,13 +257,15 @@ class Client(BaseClient):
                 response = getattr(self.session, method)(uri, proxies=dict(proxies), **reqkwargs) # Make a copy of proxies
                 if 'x-mbx-used-weight-1m' in response.headers:
                     weight_used = w1 = int(response.headers['x-mbx-used-weight-1m'])
-                    if w1 - w0 > 1 and w1 > 1000: print('weight used:', w1, w1 - w0, uri, 'self.proxy:', self.proxy, 'proxies:', proxies)
-                elif weight_used > 1000 and 'sapi/v1/margin' not in uri: 
-                    print('x-mbx-used-weight-1m is not in headers for', uri, 'weight_used:', weight_used, response.headers.keys(), 'self.proxy:', self.proxy, 'proxies:', proxies)
+                    if w1 - w0 > 1 and w1 > 1000: 
+                        print('weight used:', w1, w1 - w0, uri, 'self.proxy:', self.proxy, 'proxies:', proxies, 'proxy_idx:', proxy_idx, kwargs)
+                elif weight_used > 1000: 
+                    print('x-mbx-used-weight-1m is not in headers for', uri, 'weight_used:', weight_used, response.headers.keys(), 
+                          'self.proxy:', self.proxy, 'proxies:', proxies, 'proxy_idx:', proxy_idx, kwargs)
                 break
             except Exception as e:
                 tries += 1
-                logging.exception(f'Request error in requesting {method} {uri.split(".com")[1]} {kwargs}: {str(e)} self.proxy:{self.proxy} proxies:{proxies}', exc_info=False)
+                logging.exception(f'Request error in requesting {method} {uri.split(".com")[1]} {kwargs}: {str(e)} self.proxy:{self.proxy} proxies:{proxies} proxy_idx: {proxy_idx}', exc_info=False)
                 time.sleep(0.5)
         if not str(response.status_code).startswith('2'):
             if 'Timestamp for' in response.text: self._sync_time()
