@@ -174,12 +174,12 @@ class BaseClient(ABC):
 
         # set default requests timeout
         kwargs = deepcopy(kwargs)
-        kwargs['timeout'] = 10
 
         # add our global requests params
         if self._requests_params:
             kwargs.update(self._requests_params)
 
+        kwargs['timeout'] = 10
         data = kwargs.get('data', None)
         if data and isinstance(data, dict):
             kwargs['data'] = data
