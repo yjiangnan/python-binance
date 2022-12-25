@@ -238,6 +238,11 @@ class Client(BaseClient):
         headers = self._get_headers()
         session = requests.session()
         session.headers.update(headers)
+        # the defulat pool_maxsize is 10, if thread number > pool_maxsize:
+        # WARNING:urllib3.connectionpool:Connection pool is full, discarding connection
+        adapter = requests.adapters.HTTPAdapter(pool_maxsize=60, max_retries=5)
+        session.mount('http://', adapter)
+        session.mount('https://', adapter)
         return session
 
     def _request(self, method, uri, signed, force_params=False, proxy_idx=-1, **kwargs):
