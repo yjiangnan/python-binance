@@ -18,7 +18,7 @@ with codecs.open(
 
 setup(
     name='python-binance',
-    version='0.7.5-async',
+    version='0.7.5a0',
     packages=['binance'],
     description='Binance REST API python implementation',
     url='https://github.com/sammchardy/python-binance',
