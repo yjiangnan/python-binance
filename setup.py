@@ -3,7 +3,7 @@ from setuptools import setup
 import codecs
 import os
 import re
-
+__version__ = '0.7.6'
 
 with codecs.open(
         os.path.join(
@@ -18,7 +18,7 @@ with codecs.open(
 
 setup(
     name='python-binance',
-    version='0.7.5a0',
+    version=__version__,
     packages=['binance'],
     description='Binance REST API python implementation',
     url='https://github.com/sammchardy/python-binance',
