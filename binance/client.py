@@ -217,7 +217,7 @@ class Client(BaseClient):
     proxyid = 0
     default_proxy = {}
     
-    def __init__(self, api_key, api_secret, proxies=[], requests_params=None):
+    def __init__(self, api_key, api_secret, proxies=[], sync_time=True, requests_params=None):
 
         super().__init__(api_key, api_secret, requests_params)
         if not Client.proxies: Client.proxies = proxies
@@ -225,7 +225,7 @@ class Client(BaseClient):
         self.update_proxy()
 
         # init DNS and SSL cert
-        if self.server_dt==0: self._sync_time()
+        if sync_time and self.server_dt==0: self._sync_time()
 
     def update_proxy(self):
         if Client.proxies and self.API_KEY and self.API_KEY[:6] not in ['PHAjHC']:
