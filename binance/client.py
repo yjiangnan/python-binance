@@ -216,6 +216,7 @@ class Client(BaseClient):
     proxies = []
     proxyid = 0
     default_proxy = {}
+    _running = True
     
     def __init__(self, api_key, api_secret, proxies=[], sync_time=True, requests_params=None):
 
@@ -226,6 +227,14 @@ class Client(BaseClient):
 
         # init DNS and SSL cert
         if sync_time and self.server_dt==0: self._sync_time()
+
+    def stop(self): Client._running = False
+
+    def nap_if_running(self, t):
+        for _ in range(int(t*4+0.5)):
+            if Client._running:
+                time.sleep(0.25)
+            else: return
 
     def update_proxy(self):
         if Client.proxies and self.API_KEY and self.API_KEY[:6] not in ['PHAjHC']:
@@ -252,7 +261,7 @@ class Client(BaseClient):
             if weight_used > 1100: 
                 t = time.time() + self.server_dt; dt = 63 + t//60*60 - t
                 print('Too much weight used, waiting for', int(dt*10+0.5)/10., 'seconds', flush=True)
-                time.sleep(dt)
+                self.nap_if_running(dt)
                 weight_used = 0
             reqkwargs = self._get_request_kwargs(method, signed, force_params, **kwargs)
             try:
@@ -271,11 +280,11 @@ class Client(BaseClient):
             except Exception as e:
                 tries += 1
                 logging.exception(f'Request error in requesting {method} {uri.split(".com")[1]} {kwargs}: {str(e)} self.proxy:{self.proxy} proxies:{proxies} proxy_idx: {proxy_idx}', exc_info=False)
-                time.sleep(0.5)
+                self.nap_if_running(0.5)
         if not str(response.status_code).startswith('2'):
             if 'Timestamp for' in response.text: self._sync_time()
 #             logging.exception(f'Status error in requesting {method} {uri.split(".com")[1]} {kwargs}: {response.text}', exc_info=False)
-            if 'too much traffic' in response.text or 'much request weight used' in response.text: time.sleep(300)
+            if 'too much traffic' in response.text or 'much request weight used' in response.text: self.nap_if_running(300)
             raise BinanceAPIException(response, response.status_code, response.text)
         try:
             return response.json()
@@ -870,7 +879,7 @@ class Client(BaseClient):
                     }, proxy_idx=proxy_idx
                 )
             except: 
-                time.sleep(1)
+                self.nap_if_running(1)
                 print('Error in get_klines in get_historical_klines for', symbol, interval, start_ts)
                 continue
 
@@ -895,7 +904,7 @@ class Client(BaseClient):
 
             # sleep after every 3rd call to be kind to the API
             if idx % 3 == 0:
-                time.sleep(1)
+                self.nap_if_running(1)
 
         return output_data
 
@@ -967,7 +976,7 @@ class Client(BaseClient):
 
             # sleep after every 3rd call to be kind to the API
             if idx % 3 == 0:
-                time.sleep(1)
+                self.nap_if_running(1)
 
     def get_avg_price(self, **params):
         """Current average price for a symbol.
